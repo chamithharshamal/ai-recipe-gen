@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+transformers
+torch
+python-multipart # required for form uploads if needed
+pydantic
