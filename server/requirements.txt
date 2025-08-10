@@ -2,5 +2,10 @@ fastapi
 uvicorn
 transformers
 torch
-python-multipart # required for form uploads if needed
-pydantic
+python-multipart
+pydantic[email]
+pymongo
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+email-validator
