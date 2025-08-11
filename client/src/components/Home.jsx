@@ -3,15 +3,15 @@ import Header from './Header';
 import Footer from './Footer';
 import Hero from './Hero';
 
-const Home = () => {
+const Home = ({ onAuthRequired, onNavigate }) => {
   return (
     <div className="min-h-screen relative bg-cover bg-center bg-no-repeat bg-fixed" 
          style={{backgroundImage: "url('/images/bg-profile.png')"}}>
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
       <div className="relative z-10">
-        <Header />
+        <Header onNavigate={onNavigate} />
         <main>
-          <Hero />
+          <Hero onAuthRequired={onAuthRequired} />
         </main>
         <Footer />
       </div>

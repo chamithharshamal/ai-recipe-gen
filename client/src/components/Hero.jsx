@@ -1,16 +1,21 @@
 import React, { useState } from "react";
-import { X, Sparkles, Copy, PlusIcon, ChefHatIcon } from "lucide-react";
+import { X, Sparkles, Copy, PlusIcon, ChefHatIcon, Save, Heart } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUtensils, faUtensilSpoon } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
-const Hero = () => {
+const Hero = ({ onAuthRequired }) => {
   const [inputValue, setInputValue] = useState("");
   const [ingredients, setIngredients] = useState([]);
   const [recipe, setRecipe] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  
+  const { isAuthenticated } = useAuth();
 
   const handleInputChange = (e) => setInputValue(e.target.value);
 
@@ -122,6 +127,40 @@ const Hero = () => {
       ingredients: ingredients.length > 0 ? ingredients : [ingredientsText],
       directions: directions.length > 0 ? directions : [directionsText],
     };
+  };
+
+  const saveRecipe = async () => {
+    if (!isAuthenticated) {
+      onAuthRequired && onAuthRequired();
+      return;
+    }
+
+    if (!recipe) return;
+
+    setSaving(true);
+    try {
+      const parsedRecipe = parseRecipe(recipe);
+      if (!parsedRecipe) {
+        setError('Unable to parse recipe for saving');
+        return;
+      }
+
+      const recipeData = {
+        title: parsedRecipe.title,
+        ingredients: parsedRecipe.ingredients,
+        directions: parsedRecipe.directions,
+        original_ingredients: ingredients.join(', ')
+      };
+
+      await axios.post('http://localhost:8000/recipes/save', recipeData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      setError('Failed to save recipe. Please try again.');
+      console.error('Error saving recipe:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -249,19 +288,46 @@ const Hero = () => {
                     <ChefHatIcon className="h-8 w-8 mr-2 text-purple-400" />
                     Your AI Recipe
                   </h2>
-                  <button
-                    onClick={copyToClipboard}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    title="Copy recipe"
-                  >
-                    {copied ? (
-                      <span className="text-green-400 text-sm font-medium">
-                        Copied!
-                      </span>
-                    ) : (
-                      <Copy className="h-5 w-5 text-white hover:text-purple-400 transition-colors" />
+                  <div className="flex items-center space-x-2">
+                    {isAuthenticated && (
+                      <button
+                        onClick={saveRecipe}
+                        disabled={saving}
+                        className="flex items-center space-x-2 bg-green-600 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Save recipe"
+                      >
+                        {saving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span className="text-sm">Saving...</span>
+                          </>
+                        ) : saved ? (
+                          <>
+                            <Heart className="h-4 w-4 fill-current" />
+                            <span className="text-sm">Saved!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            <span className="text-sm">Save</span>
+                          </>
+                        )}
+                      </button>
                     )}
-                  </button>
+                    <button
+                      onClick={copyToClipboard}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      title="Copy recipe"
+                    >
+                      {copied ? (
+                        <span className="text-green-400 text-sm font-medium">
+                          Copied!
+                        </span>
+                      ) : (
+                        <Copy className="h-5 w-5 text-white hover:text-purple-400 transition-colors" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl max-h-96 overflow-y-auto border border-white/20">
                   {(() => {
